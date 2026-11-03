@@ -2,39 +2,46 @@ import { NextResponse } from "next/server";
 import dbConnect from "../../../../lib/mongodb";
 import User from "../../../../models/User";
 
-export async function GET() {
-  await dbConnect();
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
+export async function GET() {
   try {
-    // Check karein agar admin pehle se hai
-    const adminExists = await User.findOne({ email: "admin@sanskartech.com" });
+    await dbConnect();
+
+    const adminExists = await User.findOne({
+      email: "admin@sanskartech.com",
+    });
+
     if (adminExists) {
       return NextResponse.json({
+        success: true,
         message: "Admin account pehle se maujood hai!",
-        email: "admin@sanskartech.com",
-        password: "admin",
       });
     }
 
-    // Naya SuperAdmin banayein
     const newAdmin = await User.create({
       name: "Super Admin",
       email: "admin@sanskartech.com",
-      password: "admin", // Simple password for first login
+      password: "admin",
       role: "SuperAdmin",
       isActive: true,
-      assignedStores: [], // SuperAdmin can access everything or manage stores globally
+      assignedStores: [],
     });
 
     return NextResponse.json({
       success: true,
       message: "Admin account successfully ban gaya!",
       email: newAdmin.email,
-      password: newAdmin.password,
     });
   } catch (error) {
+    console.error("Setup API Error:", error);
+
     return NextResponse.json(
-      { success: false, error: error.message },
+      {
+        success: false,
+        message: "Admin setup failed",
+      },
       { status: 500 },
     );
   }
